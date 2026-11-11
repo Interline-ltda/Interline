@@ -1,0 +1,1511 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Automatizadora Interline — Automação e Segurança Eletrônica</title>
+<meta name="description" content="Instalação de câmeras de segurança, portões automáticos, cerca elétrica e reconhecimento facial. Projeto, instalação e suporte completo em automação e segurança eletrônica.">
+<meta name="theme-color" content="#05070D">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#05070D;
+  --bg-2:#0A0E18;
+  --panel:rgba(255,255,255,.035);
+  --panel-2:rgba(255,255,255,.06);
+  --line:rgba(255,255,255,.08);
+  --line-2:rgba(255,255,255,.14);
+  --text-1:#F2F5FA;
+  --text-2:#A3AEC2;
+  --text-3:#6B768C;
+  --amber:#FFB020;
+  --amber-2:#FF7A18;
+  --teal:#2DD4BF;
+  --cyan:#38BDF8;
+  --grad:linear-gradient(120deg,#FFB020 0%,#FF7A18 35%,#2DD4BF 70%,#38BDF8 100%);
+  --container:1240px;
+  --radius:18px;
+  --ease:cubic-bezier(.2,.8,.2,1);
+}
+
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;scroll-padding-top:90px;}
+body{background:var(--bg);color:var(--text-1);font-family:'Inter',sans-serif;line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden;}
+img,svg{display:block;max-width:100%;}
+a{color:inherit;text-decoration:none;}
+ul{list-style:none;}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit;}
+::selection{background:var(--amber);color:#1A1304;}
+:focus-visible{outline:2px solid var(--teal);outline-offset:3px;border-radius:4px;}
+
+.container{width:100%;max-width:var(--container);margin:0 auto;padding:0 24px;position:relative;z-index:2;}
+section{position:relative;padding:120px 0;}
+@media (max-width:640px){section{padding:76px 0;}}
+
+h1,h2,h3,h4{font-family:'Space Grotesk',sans-serif;font-weight:600;line-height:1.08;letter-spacing:-0.025em;color:var(--text-1);}
+.mono{font-family:'JetBrains Mono',monospace;}
+.grad-text{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;}
+
+/* ---------- Ambient background (estático = leve) ---------- */
+.ambient{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(700px 520px at 0% 0%,rgba(255,138,31,.14),transparent 70%),
+    radial-gradient(640px 520px at 100% 35%,rgba(20,184,166,.11),transparent 70%),
+    radial-gradient(700px 500px at 40% 110%,rgba(37,99,235,.09),transparent 70%);}
+/* grade só no topo da página (não fixa) */
+.grid-bg{position:absolute;top:0;left:0;right:0;height:1100px;z-index:0;pointer-events:none;
+  background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);
+  background-size:64px 64px;
+  -webkit-mask-image:radial-gradient(ellipse 80% 70% at 50% 0%,#000 20%,transparent 75%);
+  mask-image:radial-gradient(ellipse 80% 70% at 50% 0%,#000 20%,transparent 75%);}
+/* pausa animações quando o bloco sai da tela */
+.is-off,.is-off *,.is-off *::before,.is-off *::after{animation-play-state:paused !important;}
+
+.scroll-progress{position:fixed;top:0;left:0;height:2px;width:100%;background:var(--grad);transform-origin:0 50%;transform:scaleX(0);z-index:300;}
+
+/* ---------- Eyebrow / section heads ---------- */
+.eyebrow{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500;letter-spacing:.16em;color:var(--text-2);display:inline-flex;align-items:center;gap:10px;margin-bottom:22px;padding:7px 14px 7px 10px;border:1px solid var(--line-2);border-radius:100px;background:rgba(255,255,255,.04);}
+.eyebrow .dot{width:7px;height:7px;border-radius:50%;background:var(--amber);box-shadow:0 0 10px var(--amber);animation:blink 2s ease-in-out infinite;}
+.eyebrow.teal .dot{background:var(--teal);box-shadow:0 0 10px var(--teal);}
+@keyframes blink{50%{opacity:.35;}}
+
+.section-head{max-width:720px;margin-bottom:64px;}
+.section-head h2{font-size:clamp(32px,5vw,58px);margin-bottom:20px;}
+.section-head p{color:var(--text-2);font-size:17.5px;max-width:600px;}
+.section-head.center{margin-inline:auto;text-align:center;}
+.section-head.center p{margin-inline:auto;}
+
+/* ---------- Buttons ---------- */
+.btn{position:relative;display:inline-flex;align-items:center;gap:10px;padding:16px 28px;border-radius:100px;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:15.5px;transition:transform .35s var(--ease),box-shadow .35s var(--ease),background .3s ease,border-color .3s ease,color .3s ease;white-space:nowrap;isolation:isolate;overflow:hidden;}
+.btn svg{width:18px;height:18px;}
+.btn-primary{background:linear-gradient(135deg,#FFC24D,#FF8A1F);color:#1A1004;box-shadow:0 10px 40px -10px rgba(255,138,31,.7),inset 0 1px 0 rgba(255,255,255,.45);}
+.btn-primary::after{content:'';position:absolute;inset:0;background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.55) 50%,transparent 70%);transform:translateX(-120%);transition:transform .8s var(--ease);z-index:-1;}
+.btn-primary:hover{transform:translateY(-3px);box-shadow:0 18px 50px -12px rgba(255,138,31,.9),inset 0 1px 0 rgba(255,255,255,.45);}
+.btn-primary:hover::after{transform:translateX(120%);}
+.btn-ghost{border:1px solid var(--line-2);color:var(--text-1);background:rgba(255,255,255,.04);}
+.btn-ghost:hover{border-color:rgba(45,212,191,.6);color:var(--teal);background:rgba(45,212,191,.06);transform:translateY(-3px);}
+.btn-ghost svg{transition:transform .3s var(--ease);}
+.btn-ghost:hover svg{transform:translateX(4px);}
+.btn-sm{padding:11px 20px;font-size:14px;}
+.btn-block{width:100%;justify-content:center;}
+
+/* ---------- Header ---------- */
+.site-header{position:fixed;top:14px;left:0;right:0;z-index:100;transition:top .35s var(--ease);}
+.header-inner{display:flex;align-items:center;justify-content:space-between;gap:24px;padding:10px 12px 10px 20px;border-radius:100px;border:1px solid transparent;transition:background .35s ease,border-color .35s ease,box-shadow .35s ease;}
+.site-header.is-scrolled{top:10px;}
+.site-header.is-scrolled .header-inner{background:rgba(10,14,24,.72);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-color:var(--line);box-shadow:0 20px 50px -20px rgba(0,0,0,.7);}
+.brand{display:flex;align-items:center;gap:11px;}
+.logo-mark{width:36px;height:36px;flex-shrink:0;filter:drop-shadow(0 0 12px rgba(255,176,32,.45));}
+.brand-text{display:flex;flex-direction:column;line-height:1.1;}
+.brand-text strong{font-family:'Space Grotesk',sans-serif;font-size:19px;font-weight:700;letter-spacing:-.02em;}
+.brand-text span{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text-3);letter-spacing:.22em;}
+
+.site-nav{display:flex;align-items:center;gap:6px;}
+.nav-link{position:relative;font-size:14.5px;color:var(--text-2);padding:9px 14px;border-radius:100px;transition:color .25s ease,background .25s ease;}
+.nav-link:hover{color:var(--text-1);background:rgba(255,255,255,.05);}
+.nav-link.is-active{color:var(--text-1);background:rgba(255,255,255,.07);}
+.site-nav .btn{margin-left:10px;}
+.nav-toggle{display:none;width:46px;height:46px;position:relative;flex-shrink:0;border-radius:50%;border:1px solid var(--line-2);background:rgba(255,255,255,.04);}
+.nav-toggle span{position:absolute;left:13px;right:13px;height:2px;border-radius:2px;background:var(--text-1);transition:transform .3s var(--ease),opacity .25s ease;}
+.nav-toggle span:nth-child(1){top:16px;}
+.nav-toggle span:nth-child(2){top:22px;}
+.nav-toggle span:nth-child(3){top:28px;}
+.nav-toggle.is-active span:nth-child(1){transform:translateY(6px) rotate(45deg);}
+.nav-toggle.is-active span:nth-child(2){opacity:0;}
+.nav-toggle.is-active span:nth-child(3){transform:translateY(-6px) rotate(-45deg);}
+
+@media (max-width:960px){
+  .site-header{top:10px;}
+  .header-inner{background:rgba(10,14,24,.92);border-color:var(--line);}
+  .site-nav{position:fixed;inset:0;height:100vh;height:100dvh;background:#05070D;flex-direction:column;justify-content:center;align-items:center;gap:8px;opacity:0;visibility:hidden;transition:opacity .4s ease,visibility .4s;z-index:-1;}
+  .site-nav.is-open{opacity:1;visibility:visible;}
+  .site-nav .nav-link{font-family:'Space Grotesk',sans-serif;font-size:28px;font-weight:600;color:var(--text-1);transform:translateY(20px);opacity:0;transition:transform .5s var(--ease),opacity .5s ease;}
+  .site-nav.is-open .nav-link{transform:none;opacity:1;}
+  .site-nav.is-open .nav-link:nth-child(2){transition-delay:.05s}
+  .site-nav.is-open .nav-link:nth-child(3){transition-delay:.1s}
+  .site-nav.is-open .nav-link:nth-child(4){transition-delay:.15s}
+  .site-nav.is-open .nav-link:nth-child(5){transition-delay:.2s}
+  .site-nav.is-open .nav-link:nth-child(6){transition-delay:.25s}
+  .site-nav .btn{margin:22px 0 0;}
+  .nav-toggle{display:block;}
+}
+
+/* ---------- Hero ---------- */
+.hero{padding-top:170px;padding-bottom:60px;min-height:100vh;display:flex;align-items:center;}
+.hero-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:center;}
+@media (max-width:1020px){
+  .hero{padding-top:130px;min-height:auto;}
+  .hero-grid{grid-template-columns:1fr;gap:56px;}
+}
+.hero h1{font-size:clamp(42px,7vw,88px);margin-bottom:26px;font-weight:700;letter-spacing:-.04em;line-height:.98;}
+.hero h1 .line{display:block;overflow:hidden;padding-bottom:.06em;}
+.hero h1 .line > span{display:inline-block;transform:translateY(110%);animation:rise 1s var(--ease) forwards;}
+.hero h1 .line:nth-child(2) > span{animation-delay:.12s;}
+.hero h1 .line:nth-child(3) > span{animation-delay:.24s;}
+@keyframes rise{to{transform:none;}}
+.hero-lead{font-size:clamp(16px,1.6vw,19px);color:var(--text-2);max-width:560px;margin-bottom:38px;opacity:0;animation:fadeUp 1s var(--ease) .45s forwards;}
+.hero-ctas{display:flex;gap:14px;flex-wrap:wrap;opacity:0;animation:fadeUp 1s var(--ease) .6s forwards;}
+.hero .eyebrow{opacity:0;animation:fadeUp .9s var(--ease) forwards;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px);}to{opacity:1;transform:none;}}
+
+.hero-stats{display:grid;grid-template-columns:repeat(4,auto);justify-content:start;gap:36px;margin-top:56px;padding-top:30px;border-top:1px solid var(--line);opacity:0;animation:fadeUp 1s var(--ease) .8s forwards;}
+@media (max-width:560px){.hero-stats{grid-template-columns:repeat(2,1fr);gap:24px;}}
+.stat strong{display:block;font-family:'Space Grotesk',sans-serif;font-size:clamp(26px,3vw,36px);font-weight:700;letter-spacing:-.03em;line-height:1;margin-bottom:8px;}
+.stat > span{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.1em;color:var(--text-3);text-transform:uppercase;}
+
+/* Radar visual */
+.hero-visual{position:relative;display:flex;justify-content:center;opacity:0;animation:zoomIn 1.4s var(--ease) .3s forwards;}
+@keyframes zoomIn{from{opacity:0;transform:scale(.88);}to{opacity:1;transform:none;}}
+.radar{position:relative;width:100%;max-width:520px;aspect-ratio:1;}
+.radar::before{content:'';position:absolute;inset:6%;border-radius:50%;background:radial-gradient(circle,rgba(255,176,32,.18),rgba(45,212,191,.08) 45%,transparent 70%);}
+.ring{position:absolute;border-radius:50%;border:1px solid rgba(255,255,255,.08);top:50%;left:50%;transform:translate(-50%,-50%);}
+.ring.r1{width:96%;height:96%;border-style:dashed;border-color:rgba(255,255,255,.07);}
+.ring.r2{width:72%;height:72%;border-color:rgba(45,212,191,.16);}
+.ring.r3{width:46%;height:46%;border-color:rgba(255,176,32,.2);border-style:dashed;animation:spin 40s linear infinite reverse;}
+@keyframes spin{to{transform:translate(-50%,-50%) rotate(360deg);}}
+.sweep{position:absolute;inset:14%;border-radius:50%;background:conic-gradient(from 0deg,rgba(45,212,191,.3),rgba(45,212,191,0) 22%,transparent 100%);animation:sweep 5s linear infinite;will-change:transform;}
+@keyframes sweep{to{transform:rotate(360deg);}}
+.crosshair{position:absolute;inset:0;}
+.crosshair::before,.crosshair::after{content:'';position:absolute;background:linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent);}
+.crosshair::before{left:2%;right:2%;top:50%;height:1px;}
+.crosshair::after{top:2%;bottom:2%;left:50%;width:1px;background:linear-gradient(180deg,transparent,rgba(255,255,255,.08),transparent);}
+.radar-lines{position:absolute;inset:0;width:100%;height:100%;overflow:visible;}
+.flow-line{fill:none;stroke-width:.35;stroke-dasharray:1.2 1.6;}
+.flow-line.amber{stroke:rgba(255,176,32,.7);}
+.flow-line.teal{stroke:rgba(45,212,191,.7);}
+@keyframes flow{to{stroke-dashoffset:-5.6;}}
+
+.hub{position:absolute;top:50%;left:50%;width:24%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  background:radial-gradient(circle at 30% 25%,rgba(255,255,255,.14),rgba(255,255,255,.02) 60%),#0C1220;border:1px solid var(--line-2);
+  box-shadow:0 0 0 8px rgba(255,255,255,.02),0 0 60px rgba(255,176,32,.35),inset 0 0 30px rgba(45,212,191,.15);}
+.hub svg{width:42%;height:42%;color:var(--text-1);}
+.hub small{font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.14em;color:var(--text-3);}
+.hub::after{content:'';position:absolute;inset:-14px;border-radius:50%;border:1px solid rgba(255,176,32,.35);animation:pulsering 2.6s ease-out infinite;}
+
+.node{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:8px;}
+.node-orb{position:relative;width:64px;height:64px;border-radius:18px;display:flex;align-items:center;justify-content:center;background:#0C1220;border:1px solid var(--c-line);box-shadow:0 10px 30px -10px var(--c-glow),inset 0 1px 0 rgba(255,255,255,.08);color:var(--c);animation:float 6s ease-in-out infinite;}
+.node-orb .icon{width:32px;height:32px;}
+.node-label{font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.12em;color:var(--text-2);display:flex;align-items:center;gap:6px;padding:3px 9px;border-radius:100px;background:rgba(12,18,32,.75);border:1px solid var(--line);}
+.node-label i{width:6px;height:6px;border-radius:50%;background:#22C55E;box-shadow:0 0 8px #22C55E;}
+.node.amber{--c:var(--amber);--c-line:rgba(255,176,32,.4);--c-glow:rgba(255,176,32,.6);}
+.node.teal{--c:var(--teal);--c-line:rgba(45,212,191,.4);--c-glow:rgba(45,212,191,.6);}
+.node.n1{top:17%;left:20%;} .node.n2{top:17%;left:80%;} .node.n3{top:83%;left:20%;} .node.n4{top:83%;left:80%;}
+.node.n2 .node-orb{animation-delay:-1.5s;} .node.n3 .node-orb{animation-delay:-3s;} .node.n4 .node-orb{animation-delay:-4.5s;}
+@keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
+@keyframes pulsering{0%{transform:scale(.9);opacity:.7;}80%{transform:scale(1.35);opacity:0;}100%{opacity:0;}}
+
+.blip{position:absolute;width:6px;height:6px;border-radius:50%;background:var(--teal);box-shadow:0 0 12px var(--teal);animation:blip 5s ease-out infinite;}
+.blip.b1{top:30%;left:62%;animation-delay:.6s;} .blip.b2{top:64%;left:34%;animation-delay:2.4s;background:var(--amber);box-shadow:0 0 12px var(--amber);} .blip.b3{top:58%;left:70%;animation-delay:3.6s;}
+@keyframes blip{0%,100%{opacity:0;transform:scale(.4);}10%{opacity:1;transform:scale(1.3);}40%{opacity:.2;transform:scale(1);}}
+
+.hud-chip{position:absolute;display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:14px;background:rgba(12,18,32,.94);border:1px solid var(--line-2);box-shadow:0 20px 40px -18px rgba(0,0,0,.8);font-size:12.5px;white-space:nowrap;z-index:3;}
+.hud-chip strong{display:block;font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:600;line-height:1.2;}
+.hud-chip span{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-3);letter-spacing:.06em;}
+.hud-chip .ic{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.hud-chip .ic .icon{width:18px;height:18px;}
+.hud-chip.c1{top:40%;left:-6%;animation:chipIn 1s var(--ease) 1.2s both, float 7s ease-in-out 2.2s infinite;}
+.hud-chip.c1 .ic{background:rgba(239,68,68,.14);color:#F87171;}
+.hud-chip.c2{top:52%;right:-6%;animation:chipIn 1s var(--ease) 1.5s both, float 8s ease-in-out 2.5s infinite;}
+.hud-chip.c2 .ic{background:rgba(34,197,94,.14);color:#4ADE80;}
+.rec{width:8px;height:8px;border-radius:50%;background:#EF4444;display:inline-block;margin-right:5px;animation:recblink 1.2s steps(2) infinite;}
+@keyframes recblink{50%{opacity:.15;}}
+@keyframes chipIn{from{opacity:0;transform:translateY(16px) scale(.92);}to{opacity:1;transform:none;}}
+@media (max-width:1020px){.radar{max-width:440px;}.hud-chip.c1{left:0;}.hud-chip.c2{right:0;}}
+@media (max-width:520px){
+  .node-orb{width:50px;height:50px;border-radius:14px;}
+  .node-orb .icon{width:26px;height:26px;}
+  .node-label{font-size:9px;}
+  .hud-chip{padding:8px 10px;}
+  .hud-chip .ic{width:24px;height:24px;}
+  .hud-chip strong{font-size:11.5px;}
+  .hud-chip.c1{top:36%;left:-2%;}
+  .hud-chip.c2{top:56%;right:-2%;}
+}
+
+/* ---------- Marquee ---------- */
+.marquee{position:relative;z-index:2;border-block:1px solid var(--line);background:rgba(255,255,255,.015);padding:22px 0;overflow:hidden;
+  -webkit-mask-image:linear-gradient(90deg,transparent,#000 10%,#000 90%,transparent);mask-image:linear-gradient(90deg,transparent,#000 10%,#000 90%,transparent);}
+.marquee-track{display:flex;gap:56px;width:max-content;animation:marquee 38s linear infinite;}
+.marquee:hover .marquee-track{animation-play-state:paused;}
+.marquee-item{display:flex;align-items:center;gap:14px;font-family:'Space Grotesk',sans-serif;font-size:clamp(20px,2.6vw,30px);font-weight:600;color:var(--text-2);letter-spacing:-.02em;white-space:nowrap;}
+.marquee-item .icon{width:28px;height:28px;color:var(--amber);}
+.marquee-item:nth-child(even) .icon{color:var(--teal);}
+.marquee-item.outline{color:transparent;-webkit-text-stroke:1px rgba(255,255,255,.35);}
+@keyframes marquee{to{transform:translateX(-50%);}}
+
+/* generic icon helper */
+.icon{width:30px;height:30px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.icon path,.icon line,.icon rect,.icon circle,.icon polyline,.icon polygon{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.icon .dot{fill:currentColor;stroke:none;}
+
+/* ---------- Videos ---------- */
+.video-section{padding-top:110px;}
+.video-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:28px;}
+@media (max-width:780px){.video-grid{grid-template-columns:1fr;}}
+.video-wrap{position:relative;border-radius:24px;padding:1px;background:linear-gradient(140deg,rgba(255,255,255,.18),rgba(255,255,255,.03) 40%,rgba(255,255,255,.03) 60%,rgba(255,255,255,.14));transition:transform .5s var(--ease),box-shadow .5s var(--ease);isolation:isolate;}
+.video-wrap:hover{background:linear-gradient(140deg,var(--amber),rgba(255,255,255,.04) 40%,rgba(255,255,255,.04) 60%,var(--teal));transform:translateY(-6px);box-shadow:0 40px 80px -30px rgba(255,138,31,.35);}
+.video-inner{border-radius:23px;overflow:hidden;background:#0A0E18;}
+.video-ratio{position:relative;padding-bottom:56.25%;height:0;background:#000;}
+.video-ratio iframe,.video-ratio video{position:absolute;inset:0;width:100%;height:100%;border:none;}
+.video-badge{position:absolute;top:14px;left:14px;z-index:3;display:flex;align-items:center;font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.12em;padding:6px 11px;border-radius:100px;background:rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.12);pointer-events:none;}
+.video-placeholder{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:radial-gradient(circle at 50% 45%,#16213A,#0A0E18 70%);color:var(--text-3);z-index:2;}
+.video-placeholder .play-ring{position:relative;width:78px;height:78px;border-radius:50%;background:linear-gradient(135deg,#FFC24D,#FF8A1F);display:flex;align-items:center;justify-content:center;box-shadow:0 0 50px rgba(255,138,31,.55);transition:transform .4s var(--ease);}
+.video-placeholder .play-ring::after{content:'';position:absolute;inset:-10px;border-radius:50%;border:2px solid rgba(255,176,32,.5);animation:pulsering 2s ease-out infinite;}
+.video-placeholder:hover .play-ring{transform:scale(1.08);}
+.video-placeholder .play-ring svg{width:26px;height:26px;color:#1A1004;margin-left:4px;}
+.video-placeholder p{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;color:var(--text-3);}
+.video-caption{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:20px 24px;}
+.video-caption strong{font-family:'Space Grotesk',sans-serif;font-size:17px;display:block;margin-bottom:2px;letter-spacing:-.01em;}
+.video-caption span{font-size:13.5px;color:var(--text-2);}
+.video-caption .vid-no{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-3);border:1px solid var(--line-2);border-radius:100px;padding:5px 11px;flex-shrink:0;}
+
+/* ---------- Catalog ---------- */
+.catalog-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;}
+@media (max-width:1100px){.catalog-grid{grid-template-columns:repeat(2,1fr);}}
+@media (max-width:640px){.catalog-grid{grid-template-columns:1fr;}}
+
+.card-service{--accent:var(--amber);--accent-rgb:255,176,32;--accent-ink:#1A1304;--mx:50%;--my:0%;
+  position:relative;border-radius:var(--radius);padding:30px 26px 26px;display:flex;flex-direction:column;
+  background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.015));border:1px solid var(--line);
+  transition:transform .5s var(--ease),border-color .4s ease,box-shadow .5s var(--ease);overflow:hidden;isolation:isolate;}
+.card-service.accent-teal{--accent:var(--teal);--accent-rgb:45,212,191;--accent-ink:#042722;}
+.card-service::before{content:'';position:absolute;inset:0;z-index:-1;background:radial-gradient(420px circle at var(--mx) var(--my),rgba(var(--accent-rgb),.16),transparent 45%);opacity:0;transition:opacity .4s ease;}
+.card-service::after{content:'';position:absolute;inset:0;border-radius:inherit;padding:1px;z-index:-1;background:radial-gradient(260px circle at var(--mx) var(--my),rgba(var(--accent-rgb),.9),transparent 50%);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;opacity:0;transition:opacity .4s ease;}
+.card-service:hover::before,.card-service:hover::after{opacity:1;}
+.card-service:hover{transform:translateY(-6px);box-shadow:0 30px 60px -25px rgba(var(--accent-rgb),.35);}
+
+.card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px;}
+.card-code{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--text-3);letter-spacing:.1em;padding:5px 10px;border:1px solid var(--line);border-radius:100px;transition:color .3s ease,border-color .3s ease;}
+.card-service:hover .card-code{color:var(--accent);border-color:rgba(var(--accent-rgb),.4);}
+.card-icon-frame{position:relative;width:58px;height:58px;display:flex;align-items:center;justify-content:center;border-radius:16px;color:var(--accent);
+  background:linear-gradient(135deg,rgba(var(--accent-rgb),.22),rgba(var(--accent-rgb),.04));border:1px solid rgba(var(--accent-rgb),.3);box-shadow:0 10px 30px -10px rgba(var(--accent-rgb),.6);transition:transform .5s var(--ease);}
+.card-service:hover .card-icon-frame{transform:rotate(-6deg) scale(1.08);}
+.card-icon-frame .icon{width:30px;height:30px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+
+.card-service h3{font-size:21px;margin-bottom:10px;}
+.card-service p{color:var(--text-2);font-size:14.5px;margin-bottom:20px;}
+.card-features{display:flex;flex-direction:column;gap:10px;margin-bottom:28px;}
+.card-features li{display:flex;gap:10px;font-size:13.5px;color:var(--text-2);align-items:flex-start;line-height:1.45;}
+.card-features li::before{content:'';width:16px;height:16px;flex-shrink:0;margin-top:1px;border-radius:50%;
+  background:rgba(var(--accent-rgb),.15) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6,12.5 10.5,17 18,8'/></svg>") center/10px no-repeat;
+  box-shadow:inset 0 0 0 1px rgba(var(--accent-rgb),.45);}
+.card-cta{margin-top:auto;display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:14.5px;font-weight:600;font-family:'Space Grotesk',sans-serif;color:var(--text-1);width:100%;padding:13px 14px 13px 18px;border-radius:100px;border:1px solid var(--line-2);background:rgba(255,255,255,.03);transition:background .35s ease,color .35s ease,border-color .35s ease,box-shadow .35s ease;}
+.card-cta .arr{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(var(--accent-rgb),.15);color:var(--accent);transition:transform .35s var(--ease),background .35s ease,color .35s ease;}
+.card-cta svg{width:15px;height:15px;}
+.card-cta:hover,.card-service:hover .card-cta{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);box-shadow:0 14px 30px -12px rgba(var(--accent-rgb),.8);}
+.card-cta:hover .arr,.card-service:hover .card-cta .arr{background:var(--accent-ink);color:var(--accent);transform:rotate(-45deg);}
+
+.card-service.placeholder{background:transparent;border:1.5px dashed var(--line-2);align-items:center;text-align:center;justify-content:center;}
+.card-service.placeholder .card-icon-frame{margin:0 auto 22px;}
+.card-service.placeholder h3{font-size:19px;}
+.card-service.placeholder p{font-size:14px;margin-bottom:24px;}
+
+/* ---------- Process ---------- */
+.process-wrap{position:relative;}
+.process-track{position:absolute;top:34px;left:6%;right:6%;height:2px;background:var(--line);border-radius:2px;overflow:hidden;}
+.process-track span{position:absolute;inset:0;background:var(--grad);transform-origin:0 50%;transform:scaleX(var(--p,0));transition:transform .2s linear;box-shadow:0 0 18px rgba(255,176,32,.6);}
+.process-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;position:relative;}
+@media (max-width:900px){.process-track{display:none;}.process-grid{grid-template-columns:repeat(2,1fr);}}
+@media (max-width:540px){.process-grid{grid-template-columns:1fr;}}
+.process-step{position:relative;}
+.step-badge{position:relative;width:70px;height:70px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:26px;font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;
+  background:#0A0E18;border:1px solid var(--line-2);color:var(--text-2);transition:all .6s var(--ease);}
+.step-badge::before{content:'';position:absolute;inset:-6px;border-radius:50%;border:1px dashed rgba(255,255,255,.1);}
+.process-step.is-lit .step-badge{color:#1A1004;background:linear-gradient(135deg,#FFC24D,#FF8A1F);border-color:transparent;box-shadow:0 0 40px rgba(255,138,31,.55);}
+.process-step:nth-child(even).is-lit .step-badge{background:linear-gradient(135deg,#5EEAD4,#14B8A6);color:#042722;box-shadow:0 0 40px rgba(45,212,191,.5);}
+.process-step .step-no{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.14em;color:var(--text-3);margin-bottom:10px;display:block;}
+.process-step h3{font-size:21px;margin-bottom:10px;}
+.process-step p{color:var(--text-2);font-size:14.5px;}
+
+/* ---------- Diferenciais (bento) ---------- */
+.bento{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;}
+.bento .b-item:nth-child(1){grid-column:span 2;}
+.bento .b-item:nth-child(4){grid-column:span 2;}
+.bento .b-item:nth-child(6){grid-column:span 2;}
+@media (max-width:900px){.bento{grid-template-columns:repeat(2,1fr);}.bento .b-item{grid-column:span 1 !important;}}
+@media (max-width:560px){.bento{grid-template-columns:1fr;}}
+.b-item{--mx:50%;--my:50%;position:relative;overflow:hidden;border-radius:var(--radius);padding:34px 32px;min-height:220px;display:flex;flex-direction:column;justify-content:flex-end;gap:12px;
+  background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.012));border:1px solid var(--line);transition:border-color .4s ease,transform .5s var(--ease);isolation:isolate;}
+.b-item::before{content:'';position:absolute;inset:0;z-index:-1;background:radial-gradient(380px circle at var(--mx) var(--my),rgba(45,212,191,.13),transparent 50%);opacity:0;transition:opacity .4s ease;}
+.b-item:hover{border-color:rgba(45,212,191,.35);}
+.b-item:hover::before{opacity:1;}
+.b-item .b-icon{position:absolute;top:28px;left:32px;width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;color:var(--teal);background:rgba(45,212,191,.1);border:1px solid rgba(45,212,191,.25);}
+.b-item:nth-child(odd) .b-icon{color:var(--amber);background:rgba(255,176,32,.1);border-color:rgba(255,176,32,.25);}
+.b-item .b-icon .icon{width:26px;height:26px;}
+.b-item h3{font-size:22px;}
+.b-item p{color:var(--text-2);font-size:14.5px;max-width:440px;}
+.b-item .b-big{position:absolute;right:-10px;bottom:-34px;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:150px;line-height:1;letter-spacing:-.06em;color:transparent;-webkit-text-stroke:1px rgba(255,255,255,.07);z-index:-1;pointer-events:none;transition:transform .8s var(--ease);}
+.b-item:hover .b-big{transform:translateY(-10px);-webkit-text-stroke-color:rgba(255,176,32,.25);}
+
+/* ---------- Testimonials ---------- */
+.testi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
+@media (max-width:900px){.testi-grid{grid-template-columns:1fr;}}
+.testi-card{position:relative;border-radius:var(--radius);padding:34px 30px 30px;background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.015));border:1px solid var(--line);display:flex;flex-direction:column;transition:transform .5s var(--ease),border-color .4s ease;}
+.testi-card:hover{transform:translateY(-6px);border-color:var(--line-2);}
+.stars{display:flex;gap:3px;margin-bottom:20px;color:var(--amber);}
+.stars svg{width:16px;height:16px;fill:currentColor;filter:drop-shadow(0 0 6px rgba(255,176,32,.5));}
+.testi-card .quote-mark{position:absolute;top:18px;right:26px;font-family:'Space Grotesk',sans-serif;font-size:90px;line-height:1;font-weight:700;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;opacity:.35;}
+.testi-card p{color:var(--text-1);font-size:16px;line-height:1.65;margin-bottom:28px;flex:1;}
+.testi-author{display:flex;align-items:center;gap:13px;padding-top:22px;border-top:1px solid var(--line);}
+.avatar{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:15px;color:#1A1004;background:linear-gradient(135deg,#FFC24D,#FF8A1F);flex-shrink:0;}
+.testi-card:nth-child(2) .avatar{background:linear-gradient(135deg,#5EEAD4,#14B8A6);color:#042722;}
+.testi-card:nth-child(3) .avatar{background:linear-gradient(135deg,#7DD3FC,#3B82F6);color:#04122A;}
+.testi-author strong{display:block;font-size:15px;font-family:'Space Grotesk',sans-serif;}
+.testi-author span{font-size:12.5px;color:var(--text-3);}
+
+/* ---------- CTA band ---------- */
+.cta-band{padding:40px 0 20px;}
+.cta-box{position:relative;overflow:hidden;border-radius:32px;padding:clamp(48px,7vw,90px) clamp(28px,6vw,80px);text-align:center;isolation:isolate;
+  background:radial-gradient(ellipse at 20% 0%,rgba(255,138,31,.35),transparent 55%),radial-gradient(ellipse at 90% 100%,rgba(45,212,191,.3),transparent 55%),#0B101C;border:1px solid var(--line-2);}
+.cta-box::before{content:'';position:absolute;inset:0;z-index:-1;background-image:linear-gradient(rgba(255,255,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.05) 1px,transparent 1px);background-size:40px 40px;-webkit-mask-image:radial-gradient(ellipse at center,#000,transparent 75%);mask-image:radial-gradient(ellipse at center,#000,transparent 75%);}
+.cta-box h2{font-size:clamp(34px,6vw,72px);font-weight:700;letter-spacing:-.04em;margin-bottom:20px;}
+.cta-box p{color:var(--text-2);font-size:18px;max-width:560px;margin:0 auto 36px;}
+.cta-box .hero-ctas{justify-content:center;opacity:1;animation:none;}
+
+/* ---------- Contact ---------- */
+.contact-grid{display:grid;grid-template-columns:.9fr 1.1fr;gap:24px;}
+@media (max-width:900px){.contact-grid{grid-template-columns:1fr;}}
+.glass{background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.015));border:1px solid var(--line);border-radius:24px;}
+.contact-info{padding:38px;}
+.contact-info h3,.contact-form h3{font-size:22px;margin-bottom:28px;}
+.contact-row{display:flex;gap:16px;margin-bottom:22px;align-items:center;}
+.contact-row .ci{width:46px;height:46px;border-radius:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--amber);background:rgba(255,176,32,.1);border:1px solid rgba(255,176,32,.22);}
+.contact-row:nth-child(odd) .ci{color:var(--teal);background:rgba(45,212,191,.1);border-color:rgba(45,212,191,.22);}
+.contact-row .icon{width:22px;height:22px;}
+.contact-row strong{display:block;font-size:14px;margin-bottom:2px;color:var(--text-2);font-weight:500;}
+.contact-row span{font-size:15px;color:var(--text-1);word-break:break-word;}
+.service-area{display:flex;flex-wrap:wrap;gap:8px;margin-top:30px;padding-top:28px;border-top:1px solid var(--line);}
+.area-tag{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--text-2);border:1px solid var(--line-2);padding:6px 13px;border-radius:100px;transition:all .3s ease;}
+.area-tag:hover{color:var(--amber);border-color:rgba(255,176,32,.5);background:rgba(255,176,32,.06);}
+
+.contact-form{padding:38px;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+@media (max-width:560px){.form-row{grid-template-columns:1fr;}.contact-info,.contact-form{padding:28px 22px;}}
+.field label{display:block;font-size:11.5px;color:var(--text-3);margin-bottom:8px;font-family:'JetBrains Mono',monospace;letter-spacing:.1em;text-transform:uppercase;}
+.field input,.field select,.field textarea{width:100%;background:rgba(0,0,0,.35);border:1px solid var(--line-2);color:var(--text-1);padding:14px 16px;border-radius:14px;font-family:'Inter',sans-serif;font-size:16px;transition:border-color .25s ease,box-shadow .25s ease,background .25s ease;outline:none;}
+.field select{appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239AA7BD' stroke-width='2'><polyline points='6,9 12,15 18,9'/></svg>");background-repeat:no-repeat;background-position:right 14px center;background-size:18px;padding-right:44px;}
+.field select option{background:#0A0E18;}
+.field input::placeholder,.field textarea::placeholder{color:var(--text-3);}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--teal);box-shadow:0 0 0 4px rgba(45,212,191,.12);background:rgba(0,0,0,.5);}
+.field-full{margin-bottom:16px;}
+.field textarea{resize:vertical;min-height:120px;}
+.form-note{font-size:12.5px;color:var(--text-3);margin-top:14px;text-align:center;}
+
+/* ---------- Footer ---------- */
+.site-footer{position:relative;z-index:2;border-top:1px solid var(--line);padding:80px 0 32px;margin-top:60px;overflow:hidden;}
+.footer-grid{display:grid;grid-template-columns:1.4fr 1fr 1fr 1.2fr;gap:40px;margin-bottom:56px;}
+@media (max-width:900px){.footer-grid{grid-template-columns:repeat(2,1fr);}}
+@media (max-width:560px){.footer-grid{grid-template-columns:1fr;}}
+.footer-brand p{color:var(--text-2);font-size:14px;margin-top:18px;max-width:300px;}
+.footer-col h4{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;letter-spacing:.16em;color:var(--text-3);margin-bottom:20px;}
+.footer-col ul li{margin-bottom:12px;}
+.footer-col a{font-size:14.5px;color:var(--text-2);transition:color .2s ease,padding .3s var(--ease);}
+.footer-col a:hover{color:var(--amber);padding-left:4px;}
+.footer-col span{font-size:14px;color:var(--text-2);word-break:break-word;}
+.footer-giant{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:clamp(70px,19vw,270px);line-height:.8;letter-spacing:-.06em;text-align:center;color:transparent;
+  background:linear-gradient(180deg,rgba(255,255,255,.1),rgba(255,255,255,0) 85%);-webkit-background-clip:text;background-clip:text;user-select:none;margin-bottom:28px;}
+.footer-bottom{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;padding-top:28px;border-top:1px solid var(--line);font-size:12.5px;color:var(--text-3);}
+
+/* ---------- Floating buttons ---------- */
+.float-stack{position:fixed;bottom:calc(22px + env(safe-area-inset-bottom));right:calc(22px + env(safe-area-inset-right));z-index:200;display:flex;flex-direction:column;align-items:center;gap:14px;}
+.float-btn{position:relative;width:58px;height:58px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 14px 34px -8px rgba(0,0,0,.65);transition:transform .35s var(--ease),box-shadow .35s ease;}
+.float-btn:hover{transform:translateY(-4px) scale(1.08);}
+.float-btn .icon{width:26px;height:26px;}
+.float-btn.wa{background:linear-gradient(135deg,#4ADE80,#16A34A);color:#03200F;box-shadow:0 14px 34px -8px rgba(34,197,94,.6);}
+.float-btn.ig{background:radial-gradient(circle at 30% 110%,#FEDA75 0%,#FA7E1E 25%,#D62976 50%,#962FBF 75%,#4F5BD5 100%);color:#fff;}
+.float-pulse{position:absolute;inset:0;border-radius:50%;border:2px solid #22C55E;animation:pulsering 2.2s ease-out infinite;}
+.float-tip{position:absolute;right:72px;top:50%;transform:translateY(-50%) translateX(8px);background:rgba(12,18,32,.92);border:1px solid var(--line-2);color:var(--text-1);font-size:13px;font-weight:500;padding:8px 13px;border-radius:10px;white-space:nowrap;opacity:0;pointer-events:none;transition:all .3s var(--ease);}
+.float-btn:hover .float-tip{opacity:1;transform:translateY(-50%);}
+@media (max-width:480px){.float-stack{gap:12px;}.float-btn{width:52px;height:52px;}.float-btn .icon{width:23px;height:23px;}.float-tip{display:none;}}
+
+/* ---------- Reveal ---------- */
+.reveal{opacity:0;transform:translateY(36px);transition:opacity .9s var(--ease),transform .9s var(--ease);transition-delay:var(--d,0s);}
+.reveal.is-visible{opacity:1;transform:none;}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms !important;animation-iteration-count:1 !important;transition-duration:.001ms !important;}
+  .reveal{opacity:1;transform:none;filter:none;}
+  .hero h1 .line > span{transform:none;}
+}
+
+@media (hover:none) and (pointer:coarse){
+  .card-service:hover{transform:translateY(-6px);box-shadow:none;}
+  .card-service:hover::before,.card-service:hover::after{opacity:0;}
+  .card-service:hover .card-cta{background:rgba(255,255,255,.03);color:var(--text-1);border-color:var(--line-2);box-shadow:none;}
+  .card-service:hover .card-cta .arr{background:rgba(var(--accent-rgb),.15);color:var(--accent);transform:none;}
+  .card-cta:active{background:var(--accent) !important;color:var(--accent-ink) !important;}
+  .btn-primary:hover,.btn-ghost:hover,.video-wrap:hover,.testi-card:hover{transform:none;}
+  .btn:active,.float-btn:active{transform:scale(.96);}
+  .float-btn:hover{transform:none;}
+}
+</style>
+</head>
+<body>
+
+<div class="scroll-progress" id="scroll-progress"></div>
+<div class="ambient" aria-hidden="true"></div>
+<div class="grid-bg" aria-hidden="true"></div>
+
+<!-- ============ ICON LIBRARY (hidden, reused via <use>) ============ -->
+<svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true" focusable="false">
+<defs>
+<linearGradient id="logo-grad" x1="0" y1="0" x2="1" y2="1">
+  <stop offset="0" stop-color="#FFC24D"/><stop offset=".55" stop-color="#FF8A1F"/><stop offset="1" stop-color="#2DD4BF"/>
+</linearGradient>
+
+<symbol id="icon-camera" viewBox="0 0 48 48">
+  <rect x="6" y="16" width="22" height="14" rx="3"/>
+  <rect x="28" y="18" width="10" height="10" rx="2"/>
+  <circle class="dot" fill="currentColor" stroke="none" cx="40" cy="14" r="1.6"/>
+  <path d="M17 30 L17 38 L9 38"/>
+  <line x1="9" y1="38" x2="9" y2="42"/>
+</symbol>
+
+<symbol id="icon-gate" viewBox="0 0 48 48">
+  <line x1="6" y1="8" x2="6" y2="40"/>
+  <line x1="42" y1="8" x2="42" y2="40"/>
+  <line x1="2" y1="40" x2="46" y2="40"/>
+  <rect x="10" y="14" width="26" height="20" rx="1"/>
+  <line x1="10" y1="20" x2="36" y2="20"/>
+  <line x1="10" y1="27" x2="36" y2="27"/>
+  <circle cx="39" cy="36" r="2.2"/>
+</symbol>
+
+<symbol id="icon-fence" viewBox="0 0 48 48">
+  <line x1="9" y1="10" x2="9" y2="40"/>
+  <line x1="24" y1="6" x2="24" y2="40"/>
+  <line x1="39" y1="12" x2="39" y2="40"/>
+  <line x1="9" y1="16" x2="39" y2="16"/>
+  <line x1="9" y1="24" x2="39" y2="24"/>
+  <line x1="9" y1="32" x2="39" y2="32"/>
+  <polyline points="32,2 28,11 33,11 27,20"/>
+</symbol>
+
+<symbol id="icon-face" viewBox="0 0 48 48">
+  <path d="M6 14 V6 H14"/>
+  <path d="M34 6 H42 V14"/>
+  <path d="M42 34 V42 H34"/>
+  <path d="M14 42 H6 V34"/>
+  <circle cx="24" cy="22" r="9"/>
+  <circle class="dot" fill="currentColor" stroke="none" cx="20.5" cy="20" r="1.3"/>
+  <circle class="dot" fill="currentColor" stroke="none" cx="27.5" cy="20" r="1.3"/>
+  <path d="M19 26 Q24 30 29 26"/>
+  <line x1="9" y1="24" x2="39" y2="24" stroke-dasharray="3 3" opacity="0.6"/>
+</symbol>
+
+<symbol id="icon-intercom" viewBox="0 0 48 48">
+  <rect x="14" y="4" width="20" height="40" rx="3"/>
+  <circle cx="24" cy="13" r="4"/>
+  <line x1="18" y1="22" x2="30" y2="22"/>
+  <line x1="18" y1="27" x2="30" y2="27"/>
+  <circle class="dot" fill="currentColor" stroke="none" cx="24" cy="34" r="2"/>
+</symbol>
+
+<symbol id="icon-home" viewBox="0 0 48 48">
+  <path d="M8 24 L24 10 L40 24"/>
+  <path d="M12 22 V40 H36 V22"/>
+  <line x1="20" y1="40" x2="20" y2="30"/>
+  <line x1="28" y1="40" x2="28" y2="30"/>
+  <path d="M30 6 a8 8 0 0 1 8 8"/>
+  <path d="M33 9 a4 4 0 0 1 4 4"/>
+</symbol>
+
+<symbol id="icon-tools" viewBox="0 0 48 48">
+  <circle cx="24" cy="24" r="9"/>
+  <circle cx="24" cy="24" r="3"/>
+  <line x1="33" y1="24" x2="37" y2="24"/>
+  <line x1="30.4" y1="30.4" x2="33.2" y2="33.2"/>
+  <line x1="24" y1="33" x2="24" y2="37"/>
+  <line x1="17.6" y1="30.4" x2="14.8" y2="33.2"/>
+  <line x1="15" y1="24" x2="11" y2="24"/>
+  <line x1="17.6" y1="17.6" x2="14.8" y2="14.8"/>
+  <line x1="24" y1="15" x2="24" y2="11"/>
+  <line x1="30.4" y1="17.6" x2="33.2" y2="14.8"/>
+</symbol>
+
+<symbol id="icon-plus" viewBox="0 0 48 48">
+  <circle cx="24" cy="24" r="18"/>
+  <line x1="24" y1="15" x2="24" y2="33"/>
+  <line x1="15" y1="24" x2="33" y2="24"/>
+</symbol>
+
+<symbol id="icon-shield" viewBox="0 0 48 48">
+  <path d="M24 4 L40 11 V24 C40 34 33 41 24 44 C15 41 8 34 8 24 V11 Z"/>
+  <polyline points="17,24 22,29 32,18"/>
+</symbol>
+
+<symbol id="icon-clock" viewBox="0 0 48 48">
+  <circle cx="24" cy="24" r="18"/>
+  <line x1="24" y1="24" x2="24" y2="13"/>
+  <line x1="24" y1="24" x2="32" y2="28"/>
+</symbol>
+
+<symbol id="icon-star" viewBox="0 0 48 48">
+  <path d="M24 6 L29 19 L43 19 L32 28 L36 42 L24 33 L12 42 L16 28 L5 19 L19 19 Z"/>
+</symbol>
+
+<symbol id="icon-check" viewBox="0 0 48 48">
+  <circle cx="24" cy="24" r="18"/>
+  <polyline points="16,25 22,31 33,18"/>
+</symbol>
+
+<symbol id="icon-building" viewBox="0 0 48 48">
+  <rect x="10" y="14" width="14" height="28"/>
+  <rect x="24" y="6" width="14" height="36"/>
+  <line x1="14" y1="20" x2="18" y2="20"/>
+  <line x1="14" y1="26" x2="18" y2="26"/>
+  <line x1="14" y1="32" x2="18" y2="32"/>
+  <line x1="28" y1="14" x2="32" y2="14"/>
+  <line x1="28" y1="20" x2="32" y2="20"/>
+  <line x1="28" y1="26" x2="32" y2="26"/>
+  <line x1="28" y1="32" x2="32" y2="32"/>
+</symbol>
+
+<symbol id="icon-clipboard" viewBox="0 0 48 48">
+  <rect x="12" y="6" width="24" height="36" rx="3"/>
+  <rect x="18" y="3" width="12" height="6" rx="2"/>
+  <line x1="17" y1="18" x2="31" y2="18"/>
+  <line x1="17" y1="24" x2="31" y2="24"/>
+  <line x1="17" y1="30" x2="25" y2="30"/>
+</symbol>
+
+<symbol id="icon-chat" viewBox="0 0 48 48">
+  <rect x="6" y="8" width="36" height="26" rx="8"/>
+  <polygon points="14,34 14,42 22,34"/>
+  <circle class="dot" fill="currentColor" stroke="none" cx="17" cy="21" r="2"/>
+  <circle class="dot" fill="currentColor" stroke="none" cx="24" cy="21" r="2"/>
+  <circle class="dot" fill="currentColor" stroke="none" cx="31" cy="21" r="2"/>
+</symbol>
+
+<symbol id="icon-mail" viewBox="0 0 48 48">
+  <rect x="5" y="10" width="38" height="28" rx="5"/>
+  <polyline points="6,13 24,27 42,13"/>
+</symbol>
+
+<symbol id="icon-pin" viewBox="0 0 48 48">
+  <path d="M24 44 C24 44 38 30 38 19 A14 14 0 0 0 10 19 C10 30 24 44 24 44 Z"/>
+  <circle cx="24" cy="19" r="5"/>
+</symbol>
+
+<symbol id="icon-instagram" viewBox="0 0 48 48">
+  <rect x="6" y="6" width="36" height="36" rx="10"/>
+  <circle cx="24" cy="24" r="9"/>
+  <circle class="dot" fill="currentColor" stroke="none" cx="34" cy="14" r="2"/>
+</symbol>
+
+<symbol id="icon-arrow" viewBox="0 0 24 24">
+  <line x1="4" y1="12" x2="19" y2="12"/>
+  <polyline points="13,6 19,12 13,18"/>
+</symbol>
+
+<symbol id="icon-starfill" viewBox="0 0 24 24">
+  <path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3 6.1 20.6l1.3-6.6L2.5 9.4l6.6-.8z"/>
+</symbol>
+
+</defs>
+</svg>
+
+<!-- ============ HEADER ============ -->
+<header class="site-header" id="site-header">
+  <div class="container">
+    <div class="header-inner">
+      <a href="#inicio" class="brand">
+        <svg class="logo-mark" viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="2" y="2" width="28" height="28" rx="8" fill="none" stroke="url(#logo-grad)" stroke-width="2.2"/>
+          <line x1="16" y1="8" x2="16" y2="13" stroke="url(#logo-grad)" stroke-width="2.2" stroke-linecap="round"/>
+          <line x1="16" y1="19" x2="16" y2="24" stroke="url(#logo-grad)" stroke-width="2.2" stroke-linecap="round"/>
+          <line x1="8" y1="16" x2="13" y2="16" stroke="url(#logo-grad)" stroke-width="2.2" stroke-linecap="round"/>
+          <line x1="19" y1="16" x2="24" y2="16" stroke="url(#logo-grad)" stroke-width="2.2" stroke-linecap="round"/>
+          <circle cx="16" cy="16" r="3" fill="url(#logo-grad)"/>
+        </svg>
+        <span class="brand-text">
+          <strong>Interline</strong>
+          <span>AUTOMATIZADORA</span>
+        </span>
+      </a>
+
+      <nav class="site-nav" id="site-nav">
+        <a class="nav-link" href="#inicio">Início</a>
+        <a class="nav-link" href="#catalogo">Catálogo</a>
+        <a class="nav-link" href="#processo">Como funciona</a>
+        <a class="nav-link" href="#diferenciais">Diferenciais</a>
+        <a class="nav-link" href="#depoimentos">Depoimentos</a>
+        <a class="nav-link" href="#contato">Contato</a>
+        <a class="btn btn-primary btn-sm" href="#" data-wa-msg="Olá! Gostaria de solicitar um orçamento com a Interline." target="_blank" rel="noopener">
+          <svg class="icon"><use href="#icon-chat"></use></svg> WhatsApp
+        </a>
+      </nav>
+
+      <button class="nav-toggle" id="nav-toggle" aria-label="Abrir menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main>
+<!-- ============ HERO ============ -->
+<section class="hero" id="inicio">
+  <div class="container hero-grid">
+    <div class="hero-text">
+      <span class="eyebrow"><span class="dot"></span>AUTOMAÇÃO E SEGURANÇA ELETRÔNICA</span>
+      <h1>
+        <span class="line"><span>Sua casa e seu negócio,</span></span>
+        <span class="line"><span class="grad-text">conectados</span></span>
+        <span class="line"><span><span class="grad-text">e protegidos.</span></span></span>
+      </h1>
+      <p class="hero-lead">A Interline projeta, instala e mantém sistemas de câmeras, motorização de portões de ferro, cerca elétrica e reconhecimento facial — tudo funcionando em rede, sob o seu controle.</p>
+      <div class="hero-ctas">
+        <a class="btn btn-primary magnetic" href="#" data-wa-msg="Olá! Gostaria de solicitar um orçamento com a Interline." target="_blank" rel="noopener">
+          <svg class="icon"><use href="#icon-chat"></use></svg> Falar no WhatsApp
+        </a>
+        <a class="btn btn-ghost magnetic" href="#catalogo">Ver catálogo de serviços <svg class="icon"><use href="#icon-arrow"></use></svg></a>
+      </div>
+
+      <div class="hero-stats">
+        <div class="stat"><strong><span class="count" data-to="24">0</span>h</strong><span>Suporte emergencial</span></div>
+        <div class="stat"><strong><span class="count" data-to="4">0</span>K</strong><span>Câmeras Ultra HD</span></div>
+        <div class="stat"><strong>&lt;<span class="count" data-to="1">0</span>s</strong><span>Reconhecimento facial</span></div>
+        <div class="stat"><strong><span class="count" data-to="100">0</span>%</strong><span>Garantia por escrito</span></div>
+      </div>
+    </div>
+
+    <div class="hero-visual" aria-hidden="true">
+      <div class="radar" id="radar">
+        <div class="ring r1"></div>
+        <div class="ring r2"></div>
+        <div class="ring r3"></div>
+        <div class="sweep"></div>
+        <div class="crosshair"></div>
+
+        <svg class="radar-lines" viewBox="0 0 100 100" preserveAspectRatio="none">
+          <polyline class="flow-line amber" points="50,50 35,50 20,17"/>
+          <polyline class="flow-line amber" points="50,50 65,50 80,17" style="animation-delay:.3s"/>
+          <polyline class="flow-line teal"  points="50,50 35,50 20,83" style="animation-delay:.6s"/>
+          <polyline class="flow-line teal"  points="50,50 65,50 80,83" style="animation-delay:.9s"/>
+        </svg>
+
+        <span class="blip b1"></span><span class="blip b2"></span><span class="blip b3"></span>
+
+        <div class="node amber n1"><div class="node-orb"><svg class="icon"><use href="#icon-gate"></use></svg></div><span class="node-label"><i></i>MOTOR</span></div>
+        <div class="node amber n2"><div class="node-orb"><svg class="icon"><use href="#icon-fence"></use></svg></div><span class="node-label"><i></i>CERCA</span></div>
+        <div class="node teal n3"><div class="node-orb"><svg class="icon"><use href="#icon-camera"></use></svg></div><span class="node-label"><i></i>CFTV</span></div>
+        <div class="node teal n4"><div class="node-orb"><svg class="icon"><use href="#icon-face"></use></svg></div><span class="node-label"><i></i>FACIAL</span></div>
+
+        <div class="hub">
+          <svg class="icon"><use href="#icon-home"></use></svg>
+          <small>CENTRAL</small>
+        </div>
+
+        <div class="hud-chip c1">
+          <div class="ic"><svg class="icon"><use href="#icon-camera"></use></svg></div>
+          <div><strong><i class="rec"></i>Câmera 04</strong><span>GRAVANDO · 4K</span></div>
+        </div>
+        <div class="hud-chip c2">
+          <div class="ic"><svg class="icon"><use href="#icon-shield"></use></svg></div>
+          <div><strong>Acesso liberado</strong><span>FACIAL · 0,6s</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ MARQUEE ============ -->
+<div class="marquee" aria-hidden="true">
+  <div class="marquee-track">
+    <span class="marquee-item"><svg class="icon"><use href="#icon-camera"></use></svg>Câmeras de Segurança</span>
+    <span class="marquee-item outline"><svg class="icon"><use href="#icon-gate"></use></svg>Motor para Portão</span>
+    <span class="marquee-item"><svg class="icon"><use href="#icon-fence"></use></svg>Cerca Elétrica</span>
+    <span class="marquee-item outline"><svg class="icon"><use href="#icon-face"></use></svg>Reconhecimento Facial</span>
+    <span class="marquee-item"><svg class="icon"><use href="#icon-intercom"></use></svg>Videoporteiro</span>
+    <span class="marquee-item outline"><svg class="icon"><use href="#icon-home"></use></svg>Automação Residencial</span>
+    <span class="marquee-item"><svg class="icon"><use href="#icon-tools"></use></svg>Manutenção 24h</span>
+    <span class="marquee-item outline"><svg class="icon"><use href="#icon-camera"></use></svg>Câmeras de Segurança</span>
+    <span class="marquee-item"><svg class="icon"><use href="#icon-gate"></use></svg>Motor para Portão</span>
+    <span class="marquee-item outline"><svg class="icon"><use href="#icon-fence"></use></svg>Cerca Elétrica</span>
+    <span class="marquee-item"><svg class="icon"><use href="#icon-face"></use></svg>Reconhecimento Facial</span>
+    <span class="marquee-item outline"><svg class="icon"><use href="#icon-intercom"></use></svg>Videoporteiro</span>
+    <span class="marquee-item"><svg class="icon"><use href="#icon-home"></use></svg>Automação Residencial</span>
+    <span class="marquee-item outline"><svg class="icon"><use href="#icon-tools"></use></svg>Manutenção 24h</span>
+  </div>
+</div>
+
+<!-- ============ VÍDEOS ============ -->
+<!--
+  ╔═══════════════════════════════════════════════════════════════╗
+  ║  COMO ADICIONAR OS VÍDEOS                                     ║
+  ║                                                               ║
+  ║  Coloque os arquivos na pasta  videos/  ao lado do HTML:      ║
+  ║                                                               ║
+  ║    📁 sua-pasta/                                              ║
+  ║       ├── index.html                                          ║
+  ║       └── videos/                                             ║
+  ║              ├── video1.mp4   ← vídeo do lado esquerdo        ║
+  ║              └── video2.mp4   ← vídeo do lado direito         ║
+  ║                                                               ║
+  ║  Os players aparecem automaticamente ao colocar os arquivos.  ║
+  ║  Edite título/legenda nas linhas <strong> e <span> abaixo.    ║
+  ╚═══════════════════════════════════════════════════════════════╝
+-->
+<section id="video" class="video-section">
+  <div class="container">
+    <div class="section-head center reveal">
+      <span class="eyebrow teal"><span class="dot"></span>NA PRÁTICA</span>
+      <h2>Veja a Interline <span class="grad-text">em ação</span></h2>
+      <p>Instalações reais executadas pela nossa equipe, do início ao fim.</p>
+    </div>
+
+    <div class="video-grid">
+
+      <!-- ═══ VÍDEO 1 — coloque o arquivo em: videos/video1.mp4 ═══ -->
+      <div class="video-wrap reveal">
+        <div class="video-inner">
+          <div class="video-ratio">
+            <span class="video-badge"><i class="rec"></i>REC · 01</span>
+            <video id="video-1" controls playsinline webkit-playsinline preload="metadata" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;">
+              <source src="videos/video1.mp4" type="video/mp4">
+            </video>
+            <div class="video-placeholder" id="ph-1">
+              <div class="play-ring">
+                <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
+              </div>
+              <p>videos/video1.mp4</p>
+            </div>
+          </div>
+          <div class="video-caption">
+            <div>
+              <!-- ▼ Edite título e legenda do vídeo 1 aqui ▼ -->
+              <strong>Veja a Interline em ação</strong>
+              <span>Instalação real feita pela nossa equipe</span>
+            </div>
+            <span class="vid-no">01</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ VÍDEO 2 — coloque o arquivo em: videos/video2.mp4 ═══ -->
+      <div class="video-wrap reveal" style="--d:.12s">
+        <div class="video-inner">
+          <div class="video-ratio">
+            <span class="video-badge"><i class="rec"></i>REC · 02</span>
+            <video id="video-2" controls playsinline webkit-playsinline preload="metadata" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;">
+              <source src="videos/video2.mp4" type="video/mp4">
+            </video>
+            <div class="video-placeholder" id="ph-2">
+              <div class="play-ring">
+                <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
+              </div>
+              <p>videos/video2.mp4</p>
+            </div>
+          </div>
+          <div class="video-caption">
+            <div>
+              <!-- ▼ Edite título e legenda do vídeo 2 aqui ▼ -->
+              <strong>Mais um serviço executado</strong>
+              <span>Projeto concluído pela equipe Interline</span>
+            </div>
+            <span class="vid-no">02</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ============ CATALOGO ============ -->
+<section id="catalogo">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="eyebrow"><span class="dot"></span>CATÁLOGO DE SERVIÇOS</span>
+      <h2>Soluções completas em <span class="grad-text">segurança e automação</span></h2>
+      <p>Cada módulo pode ser instalado de forma independente ou combinado em um único sistema integrado. A Interline cuida do projeto, da instalação e da manutenção, do início ao fim.</p>
+    </div>
+
+    <div class="catalog-grid">
+
+      <!-- MOD-01 CFTV -->
+      <article class="card-service accent-teal reveal">
+        <div class="card-top">
+          <div class="card-icon-frame"><svg class="icon"><use href="#icon-camera"></use></svg></div>
+          <span class="card-code">MOD-01 / CFTV</span>
+        </div>
+        <h3>Câmeras de Segurança</h3>
+        <p>Sistemas de monitoramento com câmeras Full HD e 4K, gravação local ou em nuvem e visualização ao vivo direto do celular.</p>
+        <ul class="card-features">
+          <li>Câmeras internas, externas e infravermelho noturno</li>
+          <li>Acesso remoto pelo aplicativo, em qualquer lugar</li>
+          <li>Gravação contínua 24h com backup</li>
+        </ul>
+        <a class="card-cta" href="#" data-wa-msg="Olá! Gostaria de um orçamento para instalação de câmeras de segurança (CFTV)." target="_blank" rel="noopener">
+          Solicitar orçamento <span class="arr"><svg class="icon"><use href="#icon-arrow"></use></svg></span>
+        </a>
+      </article>
+
+      <!-- MOD-02 MOTOR PARA PORTÃO DE FERRO -->
+      <article class="card-service reveal" style="--d:.08s">
+        <div class="card-top">
+          <div class="card-icon-frame"><svg class="icon"><use href="#icon-gate"></use></svg></div>
+          <span class="card-code">MOD-02 / MOTOR</span>
+        </div>
+        <h3>Motor para Portão de Ferro</h3>
+        <p>Instalamos motor no seu portão de ferro deslizante ou basculante já existente, deixando a abertura e o fechamento automáticos sem precisar trocar o portão.</p>
+        <ul class="card-features">
+          <li>Compatível com portões de ferro deslizantes e basculantes</li>
+          <li>Acionamento por controle remoto, aplicativo ou botoeira</li>
+          <li>Reforço e ajuste da estrutura quando necessário</li>
+        </ul>
+        <a class="card-cta" href="#" data-wa-msg="Olá! Gostaria de um orçamento para instalação de motor no meu portão de ferro." target="_blank" rel="noopener">
+          Solicitar orçamento <span class="arr"><svg class="icon"><use href="#icon-arrow"></use></svg></span>
+        </a>
+      </article>
+
+      <!-- MOD-03 CERCA -->
+      <article class="card-service reveal" style="--d:.16s">
+        <div class="card-top">
+          <div class="card-icon-frame"><svg class="icon"><use href="#icon-fence"></use></svg></div>
+          <span class="card-code">MOD-03 / PERIM</span>
+        </div>
+        <h3>Cerca Elétrica</h3>
+        <p>Cercas elétricas perimetrais com central de choque homologada, sirene própria e sensor de corte de fio para reforçar a proteção do imóvel.</p>
+        <ul class="card-features">
+          <li>Central com certificação de segurança</li>
+          <li>Sirene e alerta sonoro em caso de violação</li>
+          <li>Integração com a central de monitoramento</li>
+        </ul>
+        <a class="card-cta" href="#" data-wa-msg="Olá! Gostaria de um orçamento para instalação de cerca elétrica." target="_blank" rel="noopener">
+          Solicitar orçamento <span class="arr"><svg class="icon"><use href="#icon-arrow"></use></svg></span>
+        </a>
+      </article>
+
+      <!-- MOD-04 FACIAL -->
+      <article class="card-service accent-teal reveal" style="--d:.24s">
+        <div class="card-top">
+          <div class="card-icon-frame"><svg class="icon"><use href="#icon-face"></use></svg></div>
+          <span class="card-code">MOD-04 / ACESSO</span>
+        </div>
+        <h3>Autenticador Facial</h3>
+        <p>Controle de acesso por reconhecimento facial e biometria, ideal para condomínios, empresas e residências com fluxo de pessoas.</p>
+        <ul class="card-features">
+          <li>Cadastro praticamente ilimitado de usuários</li>
+          <li>Reconhecimento em menos de 1 segundo</li>
+          <li>Histórico completo de entradas e saídas</li>
+        </ul>
+        <a class="card-cta" href="#" data-wa-msg="Olá! Gostaria de um orçamento para instalação de autenticador facial / biometria." target="_blank" rel="noopener">
+          Solicitar orçamento <span class="arr"><svg class="icon"><use href="#icon-arrow"></use></svg></span>
+        </a>
+      </article>
+
+      <!-- MOD-05 INTERFONE -->
+      <article class="card-service accent-teal reveal">
+        <div class="card-top">
+          <div class="card-icon-frame"><svg class="icon"><use href="#icon-intercom"></use></svg></div>
+          <span class="card-code">MOD-05 / VOZ-VÍDEO</span>
+        </div>
+        <h3>Interfone e Videoporteiro</h3>
+        <p>Interfones e videoporteiros integrados ao portão e às câmeras, para identificar e liberar visitantes de qualquer lugar.</p>
+        <ul class="card-features">
+          <li>Atendimento de visitantes pelo aplicativo</li>
+          <li>Integração com fechaduras eletrônicas</li>
+          <li>Imagem e voz em tempo real</li>
+        </ul>
+        <a class="card-cta" href="#" data-wa-msg="Olá! Gostaria de um orçamento para interfone / videoporteiro." target="_blank" rel="noopener">
+          Solicitar orçamento <span class="arr"><svg class="icon"><use href="#icon-arrow"></use></svg></span>
+        </a>
+      </article>
+
+      <!-- MOD-06 AUTOMAÇÃO RESIDENCIAL -->
+      <article class="card-service reveal" style="--d:.08s">
+        <div class="card-top">
+          <div class="card-icon-frame"><svg class="icon"><use href="#icon-home"></use></svg></div>
+          <span class="card-code">MOD-06 / SMART</span>
+        </div>
+        <h3>Automação Residencial</h3>
+        <p>Iluminação, tomadas, persianas e outros dispositivos integrados em um único painel de controle, acessível pelo celular.</p>
+        <ul class="card-features">
+          <li>Controle por aplicativo e comando de voz</li>
+          <li>Cenários personalizados para cada momento</li>
+          <li>Compatível com Alexa e Google Home</li>
+        </ul>
+        <a class="card-cta" href="#" data-wa-msg="Olá! Gostaria de um orçamento para automação residencial." target="_blank" rel="noopener">
+          Solicitar orçamento <span class="arr"><svg class="icon"><use href="#icon-arrow"></use></svg></span>
+        </a>
+      </article>
+
+      <!-- MOD-07 MANUTENÇÃO -->
+      <article class="card-service reveal" style="--d:.16s">
+        <div class="card-top">
+          <div class="card-icon-frame"><svg class="icon"><use href="#icon-tools"></use></svg></div>
+          <span class="card-code">MOD-07 / SUPORTE</span>
+        </div>
+        <h3>Manutenção e Suporte Elétrico</h3>
+        <p>Manutenção preventiva e corretiva dos sistemas instalados, além de serviços elétricos gerais para manter tudo funcionando.</p>
+        <ul class="card-features">
+          <li>Planos de manutenção periódica</li>
+          <li>Atendimento de urgência</li>
+          <li>Revisão completa do sistema instalado</li>
+        </ul>
+        <a class="card-cta" href="#" data-wa-msg="Olá! Gostaria de um orçamento para manutenção e suporte elétrico." target="_blank" rel="noopener">
+          Solicitar orçamento <span class="arr"><svg class="icon"><use href="#icon-arrow"></use></svg></span>
+        </a>
+      </article>
+
+      <!-- PLACEHOLDER: espaço para novos serviços -->
+      <!-- Para adicionar um novo serviço, duplique um bloco <article class="card-service"> e ajuste código, ícone, título, descrição e link do WhatsApp. -->
+      <article class="card-service placeholder reveal" style="--d:.24s">
+        <div class="card-icon-frame"><svg class="icon"><use href="#icon-plus"></use></svg></div>
+        <h3>Seu projeto não está na lista?</h3>
+        <p>Trabalhamos sob medida. Conte o que você precisa e montamos uma solução personalizada de automação ou segurança.</p>
+        <a class="btn btn-primary btn-sm" href="#" data-wa-msg="Olá! Tenho um projeto de automação/segurança que não está no catálogo, gostaria de conversar." target="_blank" rel="noopener">
+          Conversar no WhatsApp
+        </a>
+      </article>
+
+    </div>
+  </div>
+</section>
+
+<!-- ============ COMO FUNCIONA ============ -->
+<section id="processo">
+  <div class="container">
+    <div class="section-head center reveal">
+      <span class="eyebrow teal"><span class="dot"></span>COMO FUNCIONA</span>
+      <h2>Do primeiro contato à <span class="grad-text">instalação concluída</span></h2>
+      <p>Um processo simples e transparente, pensado para você saber exatamente o que esperar em cada etapa.</p>
+    </div>
+
+    <div class="process-wrap" id="process-wrap">
+      <div class="process-track"><span id="process-bar"></span></div>
+      <div class="process-grid">
+        <div class="process-step reveal">
+          <div class="step-badge">01</div>
+          <span class="step-no">CONTATO</span>
+          <h3>Você fala com a gente</h3>
+          <p>Envie uma mensagem pelo WhatsApp contando o que precisa: tipo de imóvel, serviço de interesse e prazo desejado.</p>
+        </div>
+        <div class="process-step reveal" style="--d:.1s">
+          <div class="step-badge">02</div>
+          <span class="step-no">VISITA TÉCNICA</span>
+          <h3>Avaliação e orçamento</h3>
+          <p>Avaliamos o local, indicamos o equipamento mais adequado e enviamos um orçamento detalhado, sem compromisso.</p>
+        </div>
+        <div class="process-step reveal" style="--d:.2s">
+          <div class="step-badge">03</div>
+          <span class="step-no">INSTALAÇÃO</span>
+          <h3>Execução do serviço</h3>
+          <p>Nossa equipe técnica instala todo o sistema com cuidado, testando cada equipamento antes da entrega.</p>
+        </div>
+        <div class="process-step reveal" style="--d:.3s">
+          <div class="step-badge">04</div>
+          <span class="step-no">SUPORTE</span>
+          <h3>Acompanhamento contínuo</h3>
+          <p>Após a instalação, oferecemos suporte e manutenção para garantir que tudo continue funcionando perfeitamente.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ DIFERENCIAIS ============ -->
+<section id="diferenciais">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="eyebrow"><span class="dot"></span>POR QUE A INTERLINE</span>
+      <h2>Compromisso técnico em <span class="grad-text">cada etapa</span> do projeto</h2>
+      <p>Mais do que instalar equipamentos, cuidamos da segurança e da rotina de quem confia no nosso trabalho.</p>
+    </div>
+
+    <div class="bento">
+      <div class="b-item reveal">
+        <div class="b-icon"><svg class="icon"><use href="#icon-shield"></use></svg></div>
+        <h3>Equipe técnica certificada</h3>
+        <p>Profissionais treinados e atualizados com as principais marcas de equipamentos do mercado.</p>
+        <span class="b-big">PRO</span>
+      </div>
+      <div class="b-item reveal" style="--d:.08s">
+        <div class="b-icon"><svg class="icon"><use href="#icon-clock"></use></svg></div>
+        <h3>Atendimento rápido</h3>
+        <p>Da primeira mensagem à visita técnica, sem enrolação e com prazos combinados com você.</p>
+      </div>
+      <div class="b-item reveal">
+        <div class="b-icon"><svg class="icon"><use href="#icon-star"></use></svg></div>
+        <h3>Equipamentos de qualidade</h3>
+        <p>Trabalhamos com marcas testadas, evitando retrabalho e problemas a curto prazo.</p>
+      </div>
+      <div class="b-item reveal" style="--d:.08s">
+        <div class="b-icon"><svg class="icon"><use href="#icon-check"></use></svg></div>
+        <h3>Garantia em todos os serviços</h3>
+        <p>Cada instalação sai com garantia de equipamento e de mão de obra, por escrito.</p>
+        <span class="b-big">100%</span>
+      </div>
+      <div class="b-item reveal">
+        <div class="b-icon"><svg class="icon"><use href="#icon-clipboard"></use></svg></div>
+        <h3>Orçamento sem compromisso</h3>
+        <p>Você recebe o valor detalhado antes de decidir, sem letras pequenas nem custos escondidos.</p>
+      </div>
+      <div class="b-item reveal" style="--d:.08s">
+        <div class="b-icon"><svg class="icon"><use href="#icon-building"></use></svg></div>
+        <h3>Residencial e comercial</h3>
+        <p>Atendemos casas, condomínios, lojas, empresas e indústrias com o mesmo padrão técnico.</p>
+        <span class="b-big">DF</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ DEPOIMENTOS ============ -->
+<section id="depoimentos">
+  <div class="container">
+    <div class="section-head center reveal">
+      <span class="eyebrow teal"><span class="dot"></span>QUEM JÁ INSTALOU</span>
+      <h2>Clientes que <span class="grad-text">confiam</span> na Interline</h2>
+      <p>Alguns relatos de quem já teve seu projeto entregue pela nossa equipe.</p>
+    </div>
+
+    <div class="testi-grid">
+      <div class="testi-card reveal">
+        <span class="quote-mark">"</span>
+        <div class="stars"><svg><use href="#icon-starfill"></use></svg><svg><use href="#icon-starfill"></use></svg><svg><use href="#icon-starfill"></use></svg><svg><use href="#icon-starfill"></use></svg><svg><use href="#icon-starfill"></use></svg></div>
+        <p>A instalação da cerca elétrica e das câmeras foi rápida e bem explicada. Hoje me sinto muito mais tranquila em casa.</p>
+        <div class="testi-author">
+          <div class="avatar">CM</div>
+          <div><strong>Carla M.</strong><span>Águas Claras, DF</span></div>
+        </div>
+      </div>
+      <div class="testi-card reveal" style="--d:.1s">
+        <span class="quote-mark">"</span>
+        <div class="stars"><svg><use href="#icon-starfill"></use></svg><svg><use href="#icon-starfill"></use></svg><svg><use href="#icon-starfill"></use></svg><svg><use href="#icon-starfill"></use></svg><svg><use href="#icon-starfill"></use></svg></div>
+        <p>O reconhecimento facial resolveu um problema antigo de controle de visitantes no condomínio. Suporte sempre presente quando precisamos.</p>
+        <div class="testi-author">
+          <div class="avatar">RT</div>
+          <div><strong>Roberto T.</strong><span>Síndico, Sobradinho/DF</span></div>
+        </div>
+      </div>
+      <div class="testi-card reveal" style="--d:.2s">
+        <span class="quote-mark">"</span>
+        <div class="stars"><svg><use href="#icon-starfill"></use></svg><svg><use href="#icon-starfill"></use></svg><svg><use href="#icon-starfill"></use></svg><svg><use href="#icon-starfill"></use></svg><svg><use href="#icon-starfill"></use></svg></div>
+        <p>Automatizaram o portão da loja e integraram com o interfone. Equipe pontual e atenta aos detalhes do projeto.</p>
+        <div class="testi-author">
+          <div class="avatar">LV</div>
+          <div><strong>Loja Vértice</strong><span>Taguatinga, DF</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CTA BAND ============ -->
+<section class="cta-band">
+  <div class="container">
+    <div class="cta-box reveal">
+      <span class="eyebrow"><span class="dot"></span>ORÇAMENTO SEM COMPROMISSO</span>
+      <h2>Proteja o que <span class="grad-text">importa</span>.<br>Hoje.</h2>
+      <p>Fale agora com um especialista da Interline e receba uma proposta sob medida para o seu imóvel.</p>
+      <div class="hero-ctas">
+        <a class="btn btn-primary magnetic" href="#" data-wa-msg="Olá! Gostaria de solicitar um orçamento com a Interline." target="_blank" rel="noopener">
+          <svg class="icon"><use href="#icon-chat"></use></svg> Falar no WhatsApp
+        </a>
+        <a class="btn btn-ghost magnetic" href="#contato">Preencher formulário <svg class="icon"><use href="#icon-arrow"></use></svg></a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CONTATO ============ -->
+<section id="contato">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="eyebrow"><span class="dot"></span>FALE COM A GENTE</span>
+      <h2>Vamos planejar a segurança do <span class="grad-text">seu espaço</span>?</h2>
+      <p>Conte o que você precisa e nossa equipe retorna com um orçamento sem compromisso.</p>
+    </div>
+
+    <div class="contact-grid">
+
+      <div class="contact-info glass reveal">
+        <h3>Informações de contato</h3>
+
+        <div class="contact-row">
+          <div class="ci"><svg class="icon"><use href="#icon-chat"></use></svg></div>
+          <div>
+            <strong>WhatsApp / Telefone</strong>
+            <span>(61) 9 9133-1033</span>
+          </div>
+        </div>
+        <div class="contact-row">
+          <div class="ci"><svg class="icon"><use href="#icon-mail"></use></svg></div>
+          <div>
+            <strong>E-mail</strong>
+            <span>interlineautomatizadora@gmail.com</span>
+          </div>
+        </div>
+        <div class="contact-row">
+          <div class="ci"><svg class="icon"><use href="#icon-clock"></use></svg></div>
+          <div>
+            <strong>Horário de atendimento</strong>
+            <span>Segunda a sábado, 8h às 18h · Suporte emergencial 24h</span>
+          </div>
+        </div>
+        <div class="contact-row">
+          <div class="ci"><svg class="icon"><use href="#icon-pin"></use></svg></div>
+          <div>
+            <strong>Área de atendimento</strong>
+            <span>Brasília e região (DF)</span>
+          </div>
+        </div>
+
+        <div class="service-area">
+          <span class="area-tag">Brasília</span>
+          <span class="area-tag">Águas Claras</span>
+          <span class="area-tag">Taguatinga</span>
+          <span class="area-tag">Sobradinho</span>
+          <span class="area-tag">Ceilândia</span>
+          <span class="area-tag">Guará</span>
+        </div>
+      </div>
+
+      <form class="contact-form glass reveal" id="contact-form" style="--d:.1s">
+        <h3>Solicite seu orçamento</h3>
+        <div class="form-row">
+          <div class="field">
+            <label for="nome">Nome</label>
+            <input type="text" id="nome" name="nome" placeholder="Seu nome" required>
+          </div>
+          <div class="field">
+            <label for="telefone">Telefone / WhatsApp</label>
+            <input type="tel" id="telefone" name="telefone" placeholder="(61) 90000-0000" required>
+          </div>
+        </div>
+        <div class="field field-full">
+          <label for="servico">Serviço de interesse</label>
+          <select id="servico" name="servico">
+            <option value="Câmeras de segurança (CFTV)">Câmeras de segurança (CFTV)</option>
+            <option value="Portão automático">Portão automático</option>
+            <option value="Cerca elétrica">Cerca elétrica</option>
+            <option value="Autenticador facial">Autenticador facial</option>
+            <option value="Interfone / Videoporteiro">Interfone / Videoporteiro</option>
+            <option value="Automação residencial">Automação residencial</option>
+            <option value="Manutenção / Suporte">Manutenção / Suporte</option>
+            <option value="Outro / não listado">Outro / não listado</option>
+          </select>
+        </div>
+        <div class="field field-full">
+          <label for="mensagem">Mensagem</label>
+          <textarea id="mensagem" name="mensagem" placeholder="Conte um pouco sobre o local e o que você precisa..."></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">
+          <svg class="icon"><use href="#icon-chat"></use></svg> Enviar via WhatsApp
+        </button>
+        <p class="form-note">Ao enviar, abriremos o WhatsApp com sua mensagem já preenchida.</p>
+      </form>
+
+    </div>
+  </div>
+</section>
+</main>
+
+<!-- ============ FOOTER ============ -->
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a href="#inicio" class="brand">
+          <svg class="logo-mark" viewBox="0 0 32 32" aria-hidden="true">
+            <rect x="2" y="2" width="28" height="28" rx="8" fill="none" stroke="url(#logo-grad)" stroke-width="2.2"/>
+            <line x1="16" y1="8" x2="16" y2="13" stroke="url(#logo-grad)" stroke-width="2.2" stroke-linecap="round"/>
+            <line x1="16" y1="19" x2="16" y2="24" stroke="url(#logo-grad)" stroke-width="2.2" stroke-linecap="round"/>
+            <line x1="8" y1="16" x2="13" y2="16" stroke="url(#logo-grad)" stroke-width="2.2" stroke-linecap="round"/>
+            <line x1="19" y1="16" x2="24" y2="16" stroke="url(#logo-grad)" stroke-width="2.2" stroke-linecap="round"/>
+            <circle cx="16" cy="16" r="3" fill="url(#logo-grad)"/>
+          </svg>
+          <span class="brand-text">
+            <strong>Interline</strong>
+            <span>AUTOMATIZADORA</span>
+          </span>
+        </a>
+        <p>Automação e segurança eletrônica, do projeto à manutenção. Câmeras, portões, cerca elétrica, biometria e muito mais, em um só lugar.</p>
+      </div>
+
+      <div class="footer-col">
+        <h4>NAVEGAÇÃO</h4>
+        <ul>
+          <li><a href="#inicio">Início</a></li>
+          <li><a href="#catalogo">Catálogo</a></li>
+          <li><a href="#processo">Como funciona</a></li>
+          <li><a href="#diferenciais">Diferenciais</a></li>
+          <li><a href="#depoimentos">Depoimentos</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4>SERVIÇOS</h4>
+        <ul>
+          <li><a href="#catalogo">Câmeras de segurança</a></li>
+          <li><a href="#catalogo">Motor para portão de ferro</a></li>
+          <li><a href="#catalogo">Cerca elétrica</a></li>
+          <li><a href="#catalogo">Autenticador facial</a></li>
+          <li><a href="#catalogo">Automação residencial</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4>CONTATO</h4>
+        <ul>
+          <li><span>(61) 9 9133-1033</span></li>
+          <li><span>interlineautomatizadora@gmail.com</span></li>
+          <li><span>Brasília e região, DF</span></li>
+          <li><a href="https://www.instagram.com/interline.ltda/" target="_blank" rel="noopener">Instagram</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer-giant" aria-hidden="true">INTERLINE</div>
+
+    <div class="footer-bottom">
+      <span>© 2026 Automatizadora Interline. Todos os direitos reservados.</span>
+      <span>Automação e segurança eletrônica.</span>
+    </div>
+  </div>
+</footer>
+
+<!-- ============ BOTÕES FLUTUANTES ============ -->
+<div class="float-stack">
+  <a class="float-btn ig" href="https://www.instagram.com/interline.ltda/" target="_blank" rel="noopener" aria-label="Seguir no Instagram">
+    <span class="float-tip">Siga no Instagram</span>
+    <svg class="icon"><use href="#icon-instagram"></use></svg>
+  </a>
+  <a class="float-btn wa" href="#" data-wa-msg="Olá! Gostaria de saber mais sobre os serviços da Interline." target="_blank" rel="noopener" aria-label="Falar no WhatsApp">
+    <span class="float-pulse" aria-hidden="true"></span>
+    <span class="float-tip">Fale com a gente</span>
+    <svg class="icon"><use href="#icon-chat"></use></svg>
+  </a>
+</div>
+
+<script>
+// ===================================================================
+// TROQUE AQUI: número de WhatsApp real da empresa (formato 55 + DDD + número, só dígitos)
+const WHATSAPP_NUMBER = "5561991331033";
+// ===================================================================
+
+function buildWaLink(message){
+  return "https://wa.me/" + WHATSAPP_NUMBER + "?text=" + encodeURIComponent(message);
+}
+
+document.addEventListener("DOMContentLoaded", function(){
+
+  var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var finePointer  = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+
+  // preenche todos os links de WhatsApp com a mensagem certa
+  document.querySelectorAll("[data-wa-msg]").forEach(function(el){
+    el.setAttribute("href", buildWaLink(el.getAttribute("data-wa-msg")));
+  });
+
+  // formulário de contato -> abre WhatsApp com os dados preenchidos
+  var form = document.getElementById("contact-form");
+  if(form){
+    form.addEventListener("submit", function(e){
+      e.preventDefault();
+      var nome = form.nome.value.trim();
+      var telefone = form.telefone.value.trim();
+      var servico = form.servico.value;
+      var mensagem = form.mensagem.value.trim();
+
+      var texto = "Olá! Meu nome é " + nome + ".";
+      if(servico) texto += " Tenho interesse em: " + servico + ".";
+      if(mensagem) texto += " " + mensagem;
+      if(telefone) texto += " (Telefone para contato: " + telefone + ")";
+
+      window.open(buildWaLink(texto), "_blank");
+    });
+  }
+
+  // menu mobile
+  var navToggle = document.getElementById("nav-toggle");
+  var nav = document.getElementById("site-nav");
+  if(navToggle && nav){
+    navToggle.addEventListener("click", function(){
+      var open = nav.classList.toggle("is-open");
+      navToggle.classList.toggle("is-active");
+      navToggle.setAttribute("aria-expanded", open ? "true" : "false");
+      document.body.style.overflow = open ? "hidden" : "";
+    });
+    nav.querySelectorAll("a").forEach(function(a){
+      a.addEventListener("click", function(){
+        nav.classList.remove("is-open");
+        navToggle.classList.remove("is-active");
+        navToggle.setAttribute("aria-expanded", "false");
+        document.body.style.overflow = "";
+      });
+    });
+  }
+
+  // header + barra de progresso + timeline do processo
+  var header = document.getElementById("site-header");
+  var progress = document.getElementById("scroll-progress");
+  var processWrap = document.getElementById("process-wrap");
+  var processBar = document.getElementById("process-bar");
+  var steps = document.querySelectorAll(".process-step");
+  var ticking = false;
+  function onScroll(){
+    var y = window.scrollY;
+    header.classList.toggle("is-scrolled", y > 12);
+    var max = document.documentElement.scrollHeight - window.innerHeight;
+    progress.style.transform = "scaleX(" + (max > 0 ? y / max : 0) + ")";
+
+    if(processWrap){
+      var r = processWrap.getBoundingClientRect();
+      var vh = window.innerHeight;
+      var p = Math.min(1, Math.max(0, (vh * 0.75 - r.top) / (r.height + vh * 0.2)));
+      processBar.style.setProperty("--p", p);
+      steps.forEach(function(s, i){
+        s.classList.toggle("is-lit", p >= (i / steps.length) + 0.02 || (p > 0 && i === 0));
+      });
+    }
+    ticking = false;
+  }
+  window.addEventListener("scroll", function(){
+    if(!ticking){ requestAnimationFrame(onScroll); ticking = true; }
+  }, {passive:true});
+  onScroll();
+
+  // link ativo no menu
+  var sections = document.querySelectorAll("main section[id]");
+  var links = document.querySelectorAll(".site-nav .nav-link");
+  if("IntersectionObserver" in window){
+    var navObs = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if(entry.isIntersecting){
+          var id = entry.target.id;
+          links.forEach(function(l){ l.classList.toggle("is-active", l.getAttribute("href") === "#" + id); });
+        }
+      });
+    }, {rootMargin:"-45% 0px -50% 0px"});
+    sections.forEach(function(s){ navObs.observe(s); });
+  }
+
+  // ── Vídeos locais: some com o placeholder assim que possível ──
+  // Correção para Safari/iOS: o placeholder antigo só sumia no evento
+  // "canplay", que no Safari (com preload="metadata") pode demorar muito
+  // ou nunca disparar — deixando o placeholder travado por cima do vídeo
+  // (que na real já estava funcionando por baixo, só coberto).
+  [["video-1","ph-1"],["video-2","ph-2"]].forEach(function(pair){
+    var vid = document.getElementById(pair[0]);
+    var ph  = document.getElementById(pair[1]);
+    if(!vid || !ph) return;
+
+    function hide(){ ph.style.display = "none"; }
+
+    // Qualquer um desses eventos já indica que o vídeo está pronto/tocando
+    ["loadeddata", "loadedmetadata", "canplay", "canplaythrough", "playing"].forEach(function(evt){
+      vid.addEventListener(evt, hide);
+    });
+    if (vid.readyState >= 2) hide();
+
+    // Clicar no placeholder dá play manualmente e some com ele na hora
+    ph.style.cursor = "pointer";
+    ph.addEventListener("click", function(){
+      hide();
+      vid.play().catch(function(){ /* Safari pode exigir novo toque; sem problema */ });
+    });
+
+    // Rede de segurança: depois de 3s some de qualquer jeito, mesmo que
+    // nenhum evento tenha disparado (evita placeholder travado pra sempre)
+    setTimeout(hide, 3000);
+  });
+  // ─────────────────────────────────────────────────────────────────
+
+  // reveal ao rolar
+  var revealEls = document.querySelectorAll(".reveal");
+  if("IntersectionObserver" in window){
+    var obs = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if(entry.isIntersecting){
+          entry.target.classList.add("is-visible");
+          obs.unobserve(entry.target);
+        }
+      });
+    }, {threshold:0.12, rootMargin:"0px 0px -40px 0px"});
+    revealEls.forEach(function(el){ obs.observe(el); });
+  } else {
+    revealEls.forEach(function(el){ el.classList.add("is-visible"); });
+  }
+
+  // contadores animados
+  document.querySelectorAll(".count").forEach(function(el){
+    var to = parseInt(el.getAttribute("data-to"), 10) || 0;
+    if(reduceMotion){ el.textContent = to; return; }
+    var start = null, dur = 1600, delay = 900;
+    setTimeout(function(){
+      requestAnimationFrame(function step(ts){
+        if(!start) start = ts;
+        var t = Math.min(1, (ts - start) / dur);
+        var eased = 1 - Math.pow(1 - t, 3);
+        el.textContent = Math.round(to * eased);
+        if(t < 1) requestAnimationFrame(step);
+      });
+    }, delay);
+  });
+
+  // efeitos só para mouse (desktop)
+  if(finePointer && !reduceMotion){
+    // brilho que segue o cursor
+    var glow = document.getElementById("cursor-glow");
+    var gx = window.innerWidth/2, gy = window.innerHeight/2, tx = gx, ty = gy;
+    window.addEventListener("mousemove", function(e){
+      tx = e.clientX; ty = e.clientY;
+      document.body.classList.add("has-cursor");
+    }, {passive:true});
+    document.addEventListener("mouseleave", function(){ document.body.classList.remove("has-cursor"); });
+    (function loop(){
+      gx += (tx - gx) * 0.12; gy += (ty - gy) * 0.12;
+      glow.style.transform = "translate3d(" + gx + "px," + gy + "px,0)";
+      requestAnimationFrame(loop);
+    })();
+
+    // spotlight + tilt 3D nos cards
+    document.querySelectorAll(".card-service, .b-item").forEach(function(card){
+      var isCard = card.classList.contains("card-service");
+      card.addEventListener("mousemove", function(e){
+        var r = card.getBoundingClientRect();
+        var x = e.clientX - r.left, y = e.clientY - r.top;
+        card.style.setProperty("--mx", x + "px");
+        card.style.setProperty("--my", y + "px");
+        if(isCard){
+          var rx = ((y / r.height) - .5) * -8;
+          var ry = ((x / r.width) - .5) * 8;
+          card.style.transform = "perspective(900px) rotateX(" + rx + "deg) rotateY(" + ry + "deg) translateY(-6px)";
+        }
+      });
+      card.addEventListener("mouseleave", function(){ card.style.transform = ""; });
+    });
+
+    // botões magnéticos
+    document.querySelectorAll(".magnetic").forEach(function(btn){
+      btn.addEventListener("mousemove", function(e){
+        var r = btn.getBoundingClientRect();
+        var x = e.clientX - r.left - r.width/2, y = e.clientY - r.top - r.height/2;
+        btn.style.transform = "translate(" + x*0.18 + "px," + y*0.28 + "px)";
+      });
+      btn.addEventListener("mouseleave", function(){ btn.style.transform = ""; });
+    });
+
+    // parallax suave no radar
+    var radar = document.getElementById("radar");
+    if(radar){
+      window.addEventListener("mousemove", function(e){
+        var x = (e.clientX / window.innerWidth - .5) * 14;
+        var y = (e.clientY / window.innerHeight - .5) * 14;
+        radar.style.transform = "translate(" + (-x) + "px," + (-y) + "px)";
+      }, {passive:true});
+    }
+  }
+
+});
+</script>
+
+</body>
+</html>
